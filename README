@@ -1,0 +1,78 @@
+1. Principles, patterns, practices being applied
+	- Store enum value to database as a string to avoid error on unexpected reposition or changes to enum class.
+	- Eager fetch @ManyToOne relationship when needed to reduce 1 additional query to database.
+	- Run a separate thread for task having no impact on the main task.
+	- Use string concatenation operator for a few string on 1 line of code and use stringbuilder when doing string concatenation on multiple lines of code.
+	- Use EAV model to easily extends product attributes.
+	- Prefer constructor injection over field injection.
+	- Use stream for pure data transformation.
+	- Use enum instead of constant.
+	- Use @MappedSuperclass for common atrributes of entity.
+	- Separation of concerns
+
+2. Folder structure and framework + library
+	** Folder structure
+	- There are 3 folders in the root (VDC Assignment) folder : VDCProduct, VDCAudit and VDCShop. They are backend projects for the shop.
+	- VDCProduct: this service handles requests to query information about product.
+	- VDCAudit: this service handles requests to audit customer behaviors and changes on price of product.
+	- VDCShop: this service provides directly api to front-end shop and internally it delegates the job to VDCProduct and VDCAudit.
+	- File Product_diagram.png is entity relationship diagram of VDCProduct project.
+	- File Audit_diagram.png is entity diagram of VDCAudit project.
+
+	** Framework + library
+	- SpringBoot framework for webservice project.
+	- Spring Security to authorize request from customer to VDCShop. Since we don't implement any services to do authentication, a very basic authentication is done to run the project.
+	- hibernate-jpamodelgen to generate entity meta model used for define query specifications.
+	- lombok to simplify code for POJO class
+	- log4j2 for logging.
+	- modelmapper library to map entity to dto, H2 database to store data.
+	- apache common-lang to override equals(), hashcode() and toString() method.
+
+3.  Set up 
+	- To run those 3 project navigate to each of them and start using mvn command
+	- Example for VDCProduct project, do the same for the rest.
+		+ Open terminal at VDCAssignment folder
+		+ Navigate to VDCProduct: cd VDCProduct
+		+ Start VDCProduct project : mvn spring-boot:run
+
+4. cURL command
+	a. Request to shop backend
+	- View a product (full info)
+	curl --location --request GET 'localhost:9291/api/v1/products/aa11aa' \
+--header 'Cookie: vdc_id=aaaa'
+
+	- Search page product by optional params (basic info)
+	curl --location --request GET 'localhost:9291/api/v1/products?page=0&pageSize=5&name=product&prices=10000,2000000&brandName=brand1&color=Red&sortBy=category,price&sortDirection=desc' \
+--header 'Cookie: vdc_id=aaaa'
+
+	b. Request to audit service
+	- Create a customer behavior history
+	curl --location --request POST 'localhost:9293/api/v1/audits/customers/behaviors' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "customerId" : "123",
+    "behaviorType" : "VIEW",
+    "behaviorDetail" : "112asd12"
+}'
+
+	- Get customer behavior history (paging)
+	curl --location --request GET 'localhost:9293/api/v1/audits/customers/aaaaa111111/behaviors?page=0&pageSize=2'
+
+	- Create a product price update record
+	curl --location --request POST 'localhost:9293/api/v1/audits/products/price-updates' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "productId" : "213",
+    "currentPrice" : 12342000,
+    "nextPrice" : 567223000
+}'
+
+	- Get page product price update record 
+	curl --location --request GET 'localhost:9293/api/v1/audits/products/aa11aa/price-updates?page=0&pageSize=3'
+
+	c. Request to product service
+	- Get page product by optional param
+	curl --location --request GET 'localhost:9292/api/v1/products?page=0&pageSize=5&name=product&prices=10000,2000000&brandName=brand1&color=Red&sortBy=category,price&sortDirection=desc'
+
+	- Get product by id 
+	curl --location --request GET 'localhost:9292/api/v1/products/aa11aa'
